@@ -7,6 +7,8 @@ A Next.js (App Router) tool that scans a local `markdowns` folder and displays `
 - Reads all `.md` files from `/markdowns`
 - Shows filename, last modified date, source (`ChatGPT`), and status (`Raw`)
 - Server-rendered table view with a light, minimal UI
+- Click a table row to open a readable markdown viewer at `/view/[filename]`
+- Return to the intake table with **Back to table**
 
 ## Getting started
 

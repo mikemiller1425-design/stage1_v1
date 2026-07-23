@@ -1,4 +1,9 @@
-import { formatLastModified, type MarkdownFile } from "@/lib/markdowns";
+import Link from "next/link";
+import {
+  formatLastModified,
+  getMarkdownViewHref,
+  type MarkdownFile,
+} from "@/lib/markdowns";
 
 type MarkdownTableProps = {
   files: MarkdownFile[];
@@ -53,10 +58,15 @@ export function MarkdownTable({ files }: MarkdownTableProps) {
           {files.map((file) => (
             <tr
               key={file.filename}
-              className="transition-colors hover:bg-zinc-50/80"
+              className="relative transition-colors hover:bg-zinc-50/80"
             >
               <td className="px-5 py-4 font-medium text-zinc-900">
-                {file.filename}
+                <Link
+                  href={getMarkdownViewHref(file.filename)}
+                  className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+                >
+                  {file.filename}
+                </Link>
               </td>
               <td className="px-5 py-4 text-zinc-600 tabular-nums">
                 {formatLastModified(file.lastModified)}

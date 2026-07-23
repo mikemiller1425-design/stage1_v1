@@ -23,6 +23,7 @@ export default async function Home() {
             <p className="mt-1 text-sm text-zinc-500">
               Scanned from the local{" "}
               <code className="font-mono text-zinc-700">markdowns</code> folder.
+              Click a row to open the viewer.
             </p>
           </div>
           <p className="text-sm tabular-nums text-zinc-500">

@@ -1,4 +1,4 @@
-import { readdir, stat } from "fs/promises";
+import { readdir, readFile, stat } from "fs/promises";
 import path from "path";
 
 export type MarkdownFile = {
@@ -8,7 +8,50 @@ export type MarkdownFile = {
   status: "Raw";
 };
 
+export type MarkdownDocument = {
+  filename: string;
+  content: string;
+  lastModified: string;
+  source: "ChatGPT";
+  status: "Raw";
+};
+
 const MARKDOWNS_DIR = path.join(process.cwd(), "markdowns");
+
+function isSafeMarkdownFilename(filename: string): boolean {
+  if (!filename || !filename.endsWith(".md")) {
+    return false;
+  }
+
+  if (
+    filename.includes("..") ||
+    filename.includes("/") ||
+    filename.includes("\\") ||
+    path.isAbsolute(filename)
+  ) {
+    return false;
+  }
+
+  return path.basename(filename) === filename;
+}
+
+function resolveMarkdownPath(filename: string): string | null {
+  if (!isSafeMarkdownFilename(filename)) {
+    return null;
+  }
+
+  const resolvedDir = path.resolve(MARKDOWNS_DIR);
+  const resolvedPath = path.resolve(resolvedDir, filename);
+
+  if (
+    resolvedPath !== resolvedDir &&
+    !resolvedPath.startsWith(resolvedDir + path.sep)
+  ) {
+    return null;
+  }
+
+  return resolvedPath;
+}
 
 export async function getMarkdownFiles(): Promise<MarkdownFile[]> {
   let entries: string[];
@@ -46,6 +89,42 @@ export async function getMarkdownFiles(): Promise<MarkdownFile[]> {
   return files.sort((a, b) => a.filename.localeCompare(b.filename));
 }
 
+export async function getMarkdownContent(
+  filename: string,
+): Promise<MarkdownDocument | null> {
+  const decodedFilename = decodeURIComponent(filename);
+  const filePath = resolveMarkdownPath(decodedFilename);
+
+  if (!filePath) {
+    return null;
+  }
+
+  try {
+    const [content, fileStat] = await Promise.all([
+      readFile(filePath, "utf8"),
+      stat(filePath),
+    ]);
+
+    return {
+      filename: decodedFilename,
+      content,
+      lastModified: fileStat.mtime.toISOString(),
+      source: "ChatGPT",
+      status: "Raw",
+    };
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "ENOENT"
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export function formatLastModified(isoDate: string): string {
   return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
@@ -54,4 +133,8 @@ export function formatLastModified(isoDate: string): string {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(isoDate));
+}
+
+export function getMarkdownViewHref(filename: string): string {
+  return `/view/${encodeURIComponent(filename)}`;
 }
