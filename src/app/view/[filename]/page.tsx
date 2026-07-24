@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { IntentAnalysisPanel } from "@/components/IntentAnalysisPanel";
 import { MarkdownViewer } from "@/components/MarkdownViewer";
 import { formatLastModified, getMarkdownContent } from "@/lib/markdowns";
 
@@ -71,9 +72,22 @@ export default async function ViewMarkdownPage({ params }: ViewPageProps) {
           </span>
         </div>
 
-        <div className="rounded-lg border border-zinc-200 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-10">
-          <MarkdownViewer content={document.content} />
-        </div>
+        <section>
+          <div className="mb-4">
+            <h2 className="text-sm font-medium text-zinc-900">
+              Original markdown
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Full content of the selected file.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-zinc-200 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-10">
+            <MarkdownViewer content={document.content} />
+          </div>
+        </section>
+
+        <IntentAnalysisPanel markdownContent={document.content} />
       </main>
     </div>
   );
