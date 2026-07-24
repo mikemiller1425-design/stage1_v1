@@ -87,7 +87,10 @@ export default async function ViewMarkdownPage({ params }: ViewPageProps) {
           </div>
         </section>
 
-        <IntentAnalysisPanel markdownContent={document.content} />
+        <IntentAnalysisPanel
+          filename={document.filename}
+          markdownContent={document.content}
+        />
       </main>
     </div>
   );
