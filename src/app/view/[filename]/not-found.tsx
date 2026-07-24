@@ -23,8 +23,8 @@ export default function MarkdownNotFound() {
             That markdown file could not be opened.
           </p>
           <p className="mt-2 text-sm text-zinc-500">
-            It may have been renamed or removed from the{" "}
-            <code className="font-mono text-zinc-700">markdowns</code> folder.
+            It may have been renamed or removed from the configured markdowns
+            folder.
           </p>
         </div>
       </main>

@@ -277,13 +277,24 @@ export function IntentAnalysisPanel({
 
       {!isPending && !analysis && !error && (
         <div className="rounded-lg border border-dashed border-zinc-300 bg-white px-6 py-10 text-center">
-          <p className="text-sm text-zinc-500">
-            No analysis yet. Click{" "}
-            <span className="font-medium text-zinc-700">
-              Run Intent Analysis
-            </span>{" "}
-            to generate one.
-          </p>
+          {initiallyApproved ? (
+            <>
+              <p className="text-sm font-medium text-emerald-800">
+                This file is already marked Approved in the intake table.
+              </p>
+              <p className="mt-2 text-sm text-zinc-500">
+                Re-run Intent Analysis to generate a fresh package for Stage 3.
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-zinc-500">
+              No analysis yet. Click{" "}
+              <span className="font-medium text-zinc-700">
+                Run Intent Analysis
+              </span>{" "}
+              to generate one.
+            </p>
+          )}
         </div>
       )}
     </section>

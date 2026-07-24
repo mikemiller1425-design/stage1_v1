@@ -8,17 +8,21 @@ import {
 
 type MarkdownTableProps = {
   files: MarkdownFile[];
+  markdownsDirLabel: string;
 };
 
-export function MarkdownTable({ files }: MarkdownTableProps) {
+export function MarkdownTable({
+  files,
+  markdownsDirLabel,
+}: MarkdownTableProps) {
   if (files.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-zinc-300 bg-white px-6 py-16 text-center">
         <p className="text-sm font-medium text-zinc-900">No markdown files found</p>
         <p className="mt-2 text-sm text-zinc-500">
-          Add <code className="font-mono text-zinc-700">.md</code> files to the{" "}
-          <code className="font-mono text-zinc-700">markdowns</code> folder and
-          refresh the page.
+          Add <code className="font-mono text-zinc-700">.md</code> files to{" "}
+          <code className="font-mono text-zinc-700">{markdownsDirLabel}</code>{" "}
+          and refresh the page.
         </p>
       </div>
     );

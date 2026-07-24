@@ -19,7 +19,35 @@ export type MarkdownDocument = {
   status: IntakeStatus;
 };
 
-const MARKDOWNS_DIR = path.join(process.cwd(), "markdowns");
+const DEFAULT_MARKDOWNS_DIR = "./markdowns";
+
+/**
+ * Resolves the markdown intake folder.
+ * Uses MARKDOWNS_DIR when set (absolute or relative), otherwise ./markdowns.
+ * Absolute paths (including Synology/network mounts) are supported.
+ */
+export function getMarkdownsDir(): string {
+  const configured = process.env.MARKDOWNS_DIR?.trim();
+  const cwd = process.cwd();
+
+  if (!configured) {
+    return path.resolve(
+      /* turbopackIgnore: true */ cwd,
+      DEFAULT_MARKDOWNS_DIR,
+    );
+  }
+
+  // Absolute paths resolve to themselves; relative paths resolve from cwd.
+  return path.isAbsolute(configured)
+    ? path.normalize(configured)
+    : path.resolve(/* turbopackIgnore: true */ cwd, configured);
+}
+
+/** Human-friendly path label for UI copy. */
+export function getMarkdownsDirLabel(): string {
+  const configured = process.env.MARKDOWNS_DIR?.trim();
+  return configured || DEFAULT_MARKDOWNS_DIR;
+}
 
 function isSafeMarkdownFilename(filename: string): boolean {
   if (!filename || !filename.endsWith(".md")) {
@@ -43,12 +71,14 @@ function resolveMarkdownPath(filename: string): string | null {
     return null;
   }
 
-  const resolvedDir = path.resolve(MARKDOWNS_DIR);
+  const resolvedDir = getMarkdownsDir();
   const resolvedPath = path.resolve(resolvedDir, filename);
+  const relative = path.relative(resolvedDir, resolvedPath);
 
   if (
-    resolvedPath !== resolvedDir &&
-    !resolvedPath.startsWith(resolvedDir + path.sep)
+    relative.startsWith("..") ||
+    path.isAbsolute(relative) ||
+    relative === ""
   ) {
     return null;
   }
@@ -57,10 +87,11 @@ function resolveMarkdownPath(filename: string): string | null {
 }
 
 export async function getMarkdownFiles(): Promise<MarkdownFile[]> {
+  const markdownsDir = getMarkdownsDir();
   let entries: string[];
 
   try {
-    entries = await readdir(MARKDOWNS_DIR);
+    entries = await readdir(markdownsDir);
   } catch (error) {
     if (
       error &&
@@ -78,7 +109,7 @@ export async function getMarkdownFiles(): Promise<MarkdownFile[]> {
 
   const files = await Promise.all(
     markdownEntries.map(async (filename) => {
-      const filePath = path.join(MARKDOWNS_DIR, filename);
+      const filePath = path.join(markdownsDir, filename);
       const fileStat = await stat(filePath);
 
       return {

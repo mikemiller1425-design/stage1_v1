@@ -1,10 +1,11 @@
 import { MarkdownTable } from "@/components/MarkdownTable";
-import { getMarkdownFiles } from "@/lib/markdowns";
+import { getMarkdownFiles, getMarkdownsDirLabel } from "@/lib/markdowns";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const files = await getMarkdownFiles();
+  const markdownsDirLabel = getMarkdownsDirLabel();
 
   return (
     <div className="min-h-full bg-zinc-50">
@@ -21,9 +22,9 @@ export default async function Home() {
           <div>
             <h2 className="text-sm font-medium text-zinc-900">Markdown files</h2>
             <p className="mt-1 text-sm text-zinc-500">
-              Scanned from the local{" "}
-              <code className="font-mono text-zinc-700">markdowns</code> folder.
-              Click a row to open the viewer.
+              Scanned from{" "}
+              <code className="font-mono text-zinc-700">{markdownsDirLabel}</code>
+              . Click a row to open the viewer.
             </p>
           </div>
           <p className="text-sm tabular-nums text-zinc-500">
@@ -31,7 +32,7 @@ export default async function Home() {
           </p>
         </div>
 
-        <MarkdownTable files={files} />
+        <MarkdownTable files={files} markdownsDirLabel={markdownsDirLabel} />
       </main>
     </div>
   );
