@@ -1,11 +1,14 @@
 import { readdir, readFile, stat } from "fs/promises";
 import path from "path";
+import { getApproval, getApprovals } from "@/lib/approvals";
+
+export type IntakeStatus = "Raw" | "Approved";
 
 export type MarkdownFile = {
   filename: string;
   lastModified: string;
   source: "ChatGPT";
-  status: "Raw";
+  status: IntakeStatus;
 };
 
 export type MarkdownDocument = {
@@ -13,7 +16,7 @@ export type MarkdownDocument = {
   content: string;
   lastModified: string;
   source: "ChatGPT";
-  status: "Raw";
+  status: IntakeStatus;
 };
 
 const MARKDOWNS_DIR = path.join(process.cwd(), "markdowns");
@@ -70,6 +73,7 @@ export async function getMarkdownFiles(): Promise<MarkdownFile[]> {
     throw error;
   }
 
+  const approvals = await getApprovals();
   const markdownEntries = entries.filter((name) => name.endsWith(".md"));
 
   const files = await Promise.all(
@@ -81,7 +85,7 @@ export async function getMarkdownFiles(): Promise<MarkdownFile[]> {
         filename,
         lastModified: fileStat.mtime.toISOString(),
         source: "ChatGPT" as const,
-        status: "Raw" as const,
+        status: (approvals[filename] ? "Approved" : "Raw") as IntakeStatus,
       };
     }),
   );
@@ -100,9 +104,10 @@ export async function getMarkdownContent(
   }
 
   try {
-    const [content, fileStat] = await Promise.all([
+    const [content, fileStat, approval] = await Promise.all([
       readFile(filePath, "utf8"),
       stat(filePath),
+      getApproval(decodedFilename),
     ]);
 
     return {
@@ -110,7 +115,7 @@ export async function getMarkdownContent(
       content,
       lastModified: fileStat.mtime.toISOString(),
       source: "ChatGPT",
-      status: "Raw",
+      status: approval ? "Approved" : "Raw",
     };
   } catch (error) {
     if (

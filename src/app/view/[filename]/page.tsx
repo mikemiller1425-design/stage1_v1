@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IntentAnalysisPanel } from "@/components/IntentAnalysisPanel";
 import { MarkdownViewer } from "@/components/MarkdownViewer";
+import { StatusBadge } from "@/components/StatusBadge";
 import { formatLastModified, getMarkdownContent } from "@/lib/markdowns";
 
 export const dynamic = "force-dynamic";
@@ -67,9 +68,7 @@ export default async function ViewMarkdownPage({ params }: ViewPageProps) {
             Source <span className="text-zinc-700">{document.source}</span>
           </span>
           <span className="hidden text-zinc-300 sm:inline">·</span>
-          <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-600/15">
-            {document.status}
-          </span>
+          <StatusBadge status={document.status} />
         </div>
 
         <section>
@@ -90,6 +89,7 @@ export default async function ViewMarkdownPage({ params }: ViewPageProps) {
         <IntentAnalysisPanel
           filename={document.filename}
           markdownContent={document.content}
+          initiallyApproved={document.status === "Approved"}
         />
       </main>
     </div>

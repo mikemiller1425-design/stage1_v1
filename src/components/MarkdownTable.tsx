@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StatusBadge } from "@/components/StatusBadge";
 import {
   formatLastModified,
   getMarkdownViewHref,
@@ -73,9 +74,7 @@ export function MarkdownTable({ files }: MarkdownTableProps) {
               </td>
               <td className="px-5 py-4 text-zinc-600">{file.source}</td>
               <td className="px-5 py-4">
-                <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-600/15">
-                  {file.status}
-                </span>
+                <StatusBadge status={file.status} />
               </td>
             </tr>
           ))}
