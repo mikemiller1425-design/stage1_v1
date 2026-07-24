@@ -44,6 +44,29 @@ MARKDOWNS_DIR=/Volumes/10_CORE/chatgpt_exports
 
 Restart the Next.js dev server after changing `.env.local`.
 
+#### Synology local setup (MMNAS)
+
+Cloud agents cannot reach your LAN NAS. Run Stage 1 **on your Mac** and point it at the mounted share:
+
+1. Mount the share (Finder → Go → Connect to Server, or Terminal):
+   ```bash
+   open "smb://MMNAS._smb._tcp.local/10_CORE"
+   ```
+2. Confirm the exports folder is visible:
+   ```bash
+   ls "/Volumes/10_CORE/chatgpt_exports"
+   ```
+3. In `.env.local`:
+   ```bash
+   MARKDOWNS_DIR=/Volumes/10_CORE/chatgpt_exports
+   ```
+4. Start locally and open the printed URL:
+   ```bash
+   npm run dev
+   ```
+
+If the volume name differs after mounting, update `MARKDOWNS_DIR` to match `ls /Volumes`.
+
 ## Stage 1 workflow
 
 1. Open the intake table and click a markdown file.
