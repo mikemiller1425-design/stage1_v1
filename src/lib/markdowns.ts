@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from "fs/promises";
+import { readdir, readFile, realpath, stat } from "fs/promises";
 import path from "path";
 import { getApproval, getApprovals } from "@/lib/approvals";
 
@@ -49,31 +49,41 @@ export function getMarkdownsDirLabel(): string {
   return configured || DEFAULT_MARKDOWNS_DIR;
 }
 
-function isSafeMarkdownFilename(filename: string): boolean {
+/** Exported for unit testing filename safety rules. */
+export function isSafeMarkdownFilename(filename: string): boolean {
   if (!filename || !filename.endsWith(".md")) {
     return false;
   }
 
-  if (
-    filename.includes("..") ||
-    filename.includes("/") ||
-    filename.includes("\\") ||
-    path.isAbsolute(filename)
-  ) {
+  // Reject separators from any platform before basename checks.
+  if (filename.includes("/") || filename.includes("\\")) {
     return false;
   }
 
-  return path.basename(filename) === filename;
+  // Must be a single path segment (no directories / traversal).
+  if (filename !== path.basename(filename)) {
+    return false;
+  }
+
+  if (path.isAbsolute(filename)) {
+    return false;
+  }
+
+  if (filename === "." || filename === "..") {
+    return false;
+  }
+
+  return true;
 }
 
-function resolveMarkdownPath(filename: string): string | null {
+async function resolveMarkdownPath(filename: string): Promise<string | null> {
   if (!isSafeMarkdownFilename(filename)) {
     return null;
   }
 
   const resolvedDir = getMarkdownsDir();
-  const resolvedPath = path.resolve(resolvedDir, filename);
-  const relative = path.relative(resolvedDir, resolvedPath);
+  const candidatePath = path.resolve(resolvedDir, filename);
+  const relative = path.relative(resolvedDir, candidatePath);
 
   if (
     relative.startsWith("..") ||
@@ -83,7 +93,35 @@ function resolveMarkdownPath(filename: string): string | null {
     return null;
   }
 
-  return resolvedPath;
+  try {
+    const [realDir, realFile] = await Promise.all([
+      realpath(resolvedDir),
+      realpath(candidatePath),
+    ]);
+
+    const realRelative = path.relative(realDir, realFile);
+    if (
+      realRelative.startsWith("..") ||
+      path.isAbsolute(realRelative) ||
+      realRelative === ""
+    ) {
+      return null;
+    }
+
+    return realFile;
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error.code === "ENOENT" || error.code === "ENOTDIR")
+    ) {
+      // Keep the candidate for callers that want to distinguish missing files
+      // after safety checks; getMarkdownContent maps ENOENT to null.
+      return candidatePath;
+    }
+    throw error;
+  }
 }
 
 export async function getMarkdownFiles(): Promise<MarkdownFile[]> {
@@ -112,6 +150,11 @@ export async function getMarkdownFiles(): Promise<MarkdownFile[]> {
       const filePath = path.join(markdownsDir, filename);
       const fileStat = await stat(filePath);
 
+      // Skip directories that happen to end in .md
+      if (!fileStat.isFile()) {
+        return null;
+      }
+
       return {
         filename,
         lastModified: fileStat.mtime.toISOString(),
@@ -121,23 +164,29 @@ export async function getMarkdownFiles(): Promise<MarkdownFile[]> {
     }),
   );
 
-  return files.sort((a, b) => a.filename.localeCompare(b.filename));
+  return files
+    .filter((file): file is MarkdownFile => file !== null)
+    .sort((a, b) => a.filename.localeCompare(b.filename));
 }
 
 export async function getMarkdownContent(
   filename: string,
 ): Promise<MarkdownDocument | null> {
   const decodedFilename = decodeURIComponent(filename);
-  const filePath = resolveMarkdownPath(decodedFilename);
+  const filePath = await resolveMarkdownPath(decodedFilename);
 
   if (!filePath) {
     return null;
   }
 
   try {
-    const [content, fileStat, approval] = await Promise.all([
+    const fileStat = await stat(filePath);
+    if (!fileStat.isFile()) {
+      return null;
+    }
+
+    const [content, approval] = await Promise.all([
       readFile(filePath, "utf8"),
-      stat(filePath),
       getApproval(decodedFilename),
     ]);
 

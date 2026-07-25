@@ -23,6 +23,14 @@ cp .env.example .env.local
 npm run dev
 ```
 
+### Tests
+
+```bash
+npm test
+```
+
+Covers markdown folder resolution, path-traversal safety, file scanning, approvals persistence, Stage 1 package building, and Intent Analysis action error paths.
+
 Open [http://localhost:3000](http://localhost:3000).
 
 ### Configure the markdowns folder

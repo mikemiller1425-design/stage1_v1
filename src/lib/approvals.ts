@@ -8,14 +8,29 @@ export type ApprovalRecord = {
 
 type ApprovalsMap = Record<string, ApprovalRecord>;
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const APPROVALS_PATH = path.join(DATA_DIR, "approvals.json");
+/** Resolves approvals persistence path (overridable for tests via APPROVALS_PATH). */
+export function getApprovalsPath(): string {
+  const configured = process.env.APPROVALS_PATH?.trim();
+
+  if (configured) {
+    return path.isAbsolute(configured)
+      ? path.normalize(configured)
+      : path.resolve(process.cwd(), configured);
+  }
+
+  return path.join(process.cwd(), "data", "approvals.json");
+}
 
 async function readApprovalsMap(): Promise<ApprovalsMap> {
   try {
-    const raw = await readFile(APPROVALS_PATH, "utf8");
-    const parsed = JSON.parse(raw) as ApprovalsMap;
-    return parsed && typeof parsed === "object" ? parsed : {};
+    const raw = await readFile(getApprovalsPath(), "utf8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+
+    return parsed as ApprovalsMap;
   } catch (error) {
     if (
       error &&
@@ -30,9 +45,10 @@ async function readApprovalsMap(): Promise<ApprovalsMap> {
 }
 
 async function writeApprovalsMap(approvals: ApprovalsMap): Promise<void> {
-  await mkdir(DATA_DIR, { recursive: true });
+  const approvalsPath = getApprovalsPath();
+  await mkdir(path.dirname(approvalsPath), { recursive: true });
   await writeFile(
-    APPROVALS_PATH,
+    approvalsPath,
     `${JSON.stringify(approvals, null, 2)}\n`,
     "utf8",
   );

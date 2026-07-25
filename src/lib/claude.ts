@@ -20,7 +20,7 @@ export function extractTextFromClaudeMessage(
 ): string {
   return content
     .filter((block): block is Anthropic.Messages.TextBlock => block.type === "text")
-    .map((block) => block.text)
-    .join("\n\n")
-    .trim();
+    .map((block) => block.text.trim())
+    .filter(Boolean)
+    .join("\n\n");
 }
